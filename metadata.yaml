@@ -1,0 +1,81 @@
+name: ad-create-group
+description: Create a new group in on-premise Active Directory via LDAP
+
+inputs:
+  groupDN:
+    type: text
+    description: Distinguished Name for the new group to create (e.g., CN=My Group,OU=Groups,DC=example,DC=com)
+    required: true
+
+  samAccountName:
+    type: text
+    description: SAM account name for the group (pre-Windows 2000 name)
+    required: true
+
+  description:
+    type: text
+    description: Group description
+    required: false
+
+  groupType:
+    type: text
+    description: Type of group - 'security' or 'distribution' (default is 'security')
+    required: false
+
+  groupScope:
+    type: text
+    description: Scope of group - 'global', 'domain_local', or 'universal' (default is 'global')
+    required: false
+
+  managedBy:
+    type: text
+    description: Distinguished Name of the user or group that manages this group
+    required: false
+
+  address:
+    type: text
+    description: Optional LDAP/LDAPS URL override (e.g., ldaps://dc.example.com:636)
+    required: false
+
+  additionalAttributes:
+    type: object
+    description: Object containing additional LDAP attribute names and values to set on the new group
+    required: false
+
+  dry_run:
+    type: boolean
+    description: When true, validates parameters and logs intended actions without making changes to Active Directory
+    required: false
+
+outputs:
+  status:
+    type: text
+    description: Operation result (success, halted, dry_run_completed)
+
+  groupDN:
+    type: text
+    description: Distinguished Name of the created group
+
+  created:
+    type: boolean
+    description: Whether the group was created
+
+  groupType:
+    type: text
+    description: Type of group created (security or distribution)
+
+  groupScope:
+    type: text
+    description: Scope of group created (global, domain_local, or universal)
+
+  attributes:
+    type: array
+    description: List of user-supplied attribute names that were set
+
+  address:
+    type: text
+    description: LDAP server address used
+
+  message:
+    type: text
+    description: Additional status message or error details
