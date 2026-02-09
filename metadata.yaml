@@ -32,11 +32,6 @@ inputs:
     description: Distinguished Name of the user or group that manages this group
     required: false
 
-  address:
-    type: text
-    description: Optional LDAP/LDAPS URL override (e.g., ldaps://dc.example.com:636)
-    required: false
-
   additionalAttributes:
     type: object
     description: Object containing additional LDAP attribute names and values to set on the new group
@@ -45,6 +40,16 @@ inputs:
   dry_run:
     type: boolean
     description: When true, validates parameters and logs intended actions without making changes to Active Directory
+    required: false
+
+  successIfAlreadyExists:
+    type: boolean
+    description: If true, return success when group already exists instead of throwing an error (default false)
+    required: false
+
+  address:
+    type: text
+    description: Optional LDAP server URL override
     required: false
 
 outputs:
@@ -59,6 +64,10 @@ outputs:
   created:
     type: boolean
     description: Whether the group was created
+
+  alreadyExisted:
+    type: boolean
+    description: True if the group already existed (when successIfAlreadyExists is enabled)
 
   groupType:
     type: text

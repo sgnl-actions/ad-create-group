@@ -12,18 +12,18 @@ This action creates groups in Active Directory with support for:
 
 ## Inputs
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `groupDN` | text | Yes | Distinguished Name for the new group (e.g., `CN=My Group,OU=Groups,DC=example,DC=com`) |
-| `samAccountName` | text | Yes | SAM account name (pre-Windows 2000 name) |
-| `description` | text | No | Group description |
-| `groupType` | text | No | `security` or `distribution` (default: `security`) |
-| `groupScope` | text | No | `global`, `domain_local`, or `universal` (default: `global`) |
-| `managedBy` | text | No | DN of the user or group that manages this group |
-| `address` | text | No | Optional LDAP/LDAPS URL override |
-| `additionalAttributes` | object | No | Additional LDAP attributes to set |
-| `dry_run` | boolean | No | Validate without making changes |
-| `successIfAlreadyExists` | boolean | No | If `true`, return success when group already exists instead of throwing an error (default: `false`) |
+| Name | Type | Required | Description | Example |
+|------|------|----------|-------------|---------|
+| `groupDN` | text | Yes | Distinguished Name for the new group | `CN=Engineering Team,OU=Groups,DC=corp,DC=example,DC=com` |
+| `samAccountName` | text | Yes | SAM account name (pre-Windows 2000 name) | `engineering-team` |
+| `description` | text | No | Group description | `Engineering department security group` |
+| `groupType` | text | No | `security` or `distribution` (default: `security`) | `security` |
+| `groupScope` | text | No | `global`, `domain_local`, or `universal` (default: `global`) | `global` |
+| `managedBy` | text | No | DN of the user or group that manages this group | `CN=IT Manager,OU=Users,DC=corp,DC=example,DC=com` |
+| `additionalAttributes` | object | No | Additional LDAP attributes to set | `{"mail": "engineering@example.com"}` |
+| `dry_run` | boolean | No | Validate without making changes | `true` |
+| `successIfAlreadyExists` | boolean | No | If `true`, return success when group already exists instead of throwing an error (default: `false`) | `true` |
+| `address` | text | No | Optional LDAP server URL override | `ldaps://ad.corp.example.com:636` |
 
 ## Outputs
 
@@ -120,6 +120,30 @@ When the group already exists and this flag is set, the response will include:
 - `created: false`
 - `alreadyExisted: true`
 
+## Error Handling
+
+### Success Scenarios
+
+- **Group created**: Returns `status: "success"`, `created: true`, `alreadyExisted: false`
+- **Group already exists (with `successIfAlreadyExists: true`)**: Returns `status: "success"`, `created: false`, `alreadyExisted: true`
+
+### Retryable Errors
+
+The framework automatically retries on transient errors such as:
+- Network connectivity issues
+- LDAP server temporarily unavailable
+- Connection timeouts
+
+### Fatal Errors
+
+| LDAP Code | Error | Description |
+|-----------|-------|-------------|
+| 68 | Entry Already Exists | A group with the same DN already exists in AD (use `successIfAlreadyExists: true` to treat as success) |
+| 19 | Constraint Violation | Attribute value violates AD schema constraints |
+| 49 | Invalid Credentials | Bind DN or password is incorrect |
+| 50 | Insufficient Access Rights | Service account lacks permission to create groups |
+| 34 | Invalid DN Syntax | Malformed Distinguished Name |
+
 ## Development
 
 ### Setup
@@ -134,10 +158,29 @@ npm install
 npm test
 ```
 
+### Run tests in watch mode
+
+```bash
+npm run test:watch
+```
+
 ### Build
 
 ```bash
 npm run build
+```
+
+### Validate metadata
+
+```bash
+npm run validate
+```
+
+### Lint
+
+```bash
+npm run lint
+npm run lint:fix
 ```
 
 ### Local testing
@@ -156,6 +199,56 @@ Then run:
 ```bash
 npm run dev
 ```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"Missing LDAP bind credentials"**
+   - Ensure `LDAP_BIND_DN` and `LDAP_BIND_PASSWORD` are set in secrets
+   - Verify the bind DN is a valid Distinguished Name
+
+2. **"No URL specified"**
+   - Ensure the `ADDRESS` environment variable is set or `address` is provided in params
+   - Verify the URL format (e.g., `ldaps://ad.corp.example.com:636`)
+
+3. **"Invalid credentials"**
+   - Verify the service account DN and password are correct
+   - Check that the account is not locked or expired in Active Directory
+
+4. **"Insufficient access rights"**
+   - Verify the service account has permission to create group objects in the target OU
+   - Use AD delegation to grant the "Create Group objects" permission
+
+5. **"Entry already exists"**
+   - A group with the same DN already exists
+   - Use `successIfAlreadyExists: true` for idempotent operations
+
+6. **TLS/SSL connection errors**
+   - Verify the LDAP server is accessible on the configured port
+   - For LDAPS, ensure the server certificate is trusted or set `TLS_SKIP_VERIFY=true` for testing
+   - Check that the correct port is used (389 for LDAP, 636 for LDAPS)
+
+### Verifying Group Creation
+
+To verify the action worked correctly, you can check the group using:
+
+```bash
+# Using ldapsearch
+ldapsearch -H ldaps://ad.corp.example.com:636 \
+  -D "CN=svc-sgnl,OU=Service Accounts,DC=corp,DC=example,DC=com" \
+  -W -b "CN=Engineering Team,OU=Groups,DC=corp,DC=example,DC=com" \
+  "(objectClass=group)" cn sAMAccountName groupType
+
+# Using PowerShell
+Get-ADGroup -Identity "Engineering Team" -Properties * | Select-Object Name, SamAccountName, GroupScope, GroupCategory
+```
+
+## Support
+
+- [ldapts Documentation](https://github.com/ldapts/ldapts)
+- [Active Directory LDAP Reference](https://docs.microsoft.com/en-us/windows/win32/ad/active-directory-domain-services)
+- [SGNL Actions Documentation](https://github.com/sgnl-actions)
 
 ## License
 
