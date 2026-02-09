@@ -23,6 +23,7 @@ This action creates groups in Active Directory with support for:
 | `address` | text | No | Optional LDAP/LDAPS URL override |
 | `additionalAttributes` | object | No | Additional LDAP attributes to set |
 | `dry_run` | boolean | No | Validate without making changes |
+| `successIfAlreadyExists` | boolean | No | If `true`, return success when group already exists instead of throwing an error (default: `false`) |
 
 ## Outputs
 
@@ -30,7 +31,8 @@ This action creates groups in Active Directory with support for:
 |------|------|-------------|
 | `status` | text | Operation result (`success`, `halted`, `dry_run_completed`) |
 | `groupDN` | text | Distinguished Name of the created group |
-| `created` | boolean | Whether the group was created |
+| `created` | boolean | Whether the group was created, `false` if it already existed |
+| `alreadyExisted` | boolean | `true` if the group already existed (when `successIfAlreadyExists` is enabled) |
 | `groupType` | text | Type of group created |
 | `groupScope` | text | Scope of group created |
 | `attributes` | array | List of attributes that were set |
@@ -100,6 +102,23 @@ Active Directory groups are defined by a combination of type and scope:
   groupScope: "domain_local"
 }
 ```
+
+### Idempotent creation (success if already exists)
+
+Use `successIfAlreadyExists: true` for idempotent operations where you want the action to succeed even if the group already exists:
+
+```javascript
+{
+  groupDN: "CN=Engineering Team,OU=Groups,DC=example,DC=com",
+  samAccountName: "engineering-team",
+  successIfAlreadyExists: true
+}
+```
+
+When the group already exists and this flag is set, the response will include:
+- `status: "success"`
+- `created: false`
+- `alreadyExisted: true`
 
 ## Development
 

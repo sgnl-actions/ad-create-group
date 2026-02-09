@@ -90,13 +90,14 @@ export default {
    * @param {string} [params.managedBy] - DN of the user/group that manages this group
    * @param {Object} [params.additionalAttributes] - Additional LDAP attributes to set
    * @param {boolean} [params.dry_run] - If true, validate without making changes
+   * @param {boolean} [params.successIfAlreadyExists] - If true, return success when group already exists
    * @param {Object} context - Execution context with environment and secrets
    * @returns {Object} Job results including status, groupDN, and created flag
    */
   invoke: async (params, context) => {
     console.log('Starting Active Directory create group operation');
 
-    const { groupDN, dry_run = false } = params;
+    const { groupDN, dry_run = false, successIfAlreadyExists = false } = params;
 
     // Validate required parameters
     if (!groupDN) {
@@ -189,12 +190,28 @@ export default {
         status: 'success',
         groupDN,
         created: true,
+        alreadyExisted: false,
         attributes: userAttributes,
         groupType: params.groupType || 'security',
         groupScope: params.groupScope || 'global',
         address
       };
     } catch (error) {
+      // Check if this is an "already exists" error and we should treat it as success
+      const errorMessage = error.message.toLowerCase();
+      if (successIfAlreadyExists && (errorMessage.includes('already exists') || error.code === 68)) {
+        console.log(`Group already exists at ${groupDN}, treating as success per successIfAlreadyExists flag`);
+        return {
+          status: 'success',
+          groupDN,
+          created: false,
+          alreadyExisted: true,
+          attributes: userAttributes,
+          groupType: params.groupType || 'security',
+          groupScope: params.groupScope || 'global',
+          address
+        };
+      }
       console.error(`Failed to create group: ${error.message}`);
       throw error;
     } finally {

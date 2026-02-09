@@ -192,7 +192,7 @@ describe('AD Create Group Script', () => {
       expect(mockAdd).not.toHaveBeenCalled();
     });
 
-    test('should propagate LDAP error code 68 (entry already exists)', async () => {
+    test('should propagate LDAP error code 68 (entry already exists) by default', async () => {
       mockAdd.mockRejectedValue(
         Object.assign(new Error('Entry already exists'), { code: 68 })
       );
@@ -203,6 +203,50 @@ describe('AD Create Group Script', () => {
       };
 
       await expect(script.invoke(params, mockContext)).rejects.toThrow('Entry already exists');
+    });
+
+    test('should return success with alreadyExisted=true when successIfAlreadyExists is true and group exists', async () => {
+      mockAdd.mockRejectedValue(
+        Object.assign(new Error('Entry already exists'), { code: 68 })
+      );
+
+      const params = {
+        groupDN: 'CN=Test Group,OU=Groups,DC=example,DC=com',
+        samAccountName: 'testgroup',
+        successIfAlreadyExists: true
+      };
+
+      const result = await script.invoke(params, mockContext);
+
+      expect(result.status).toBe('success');
+      expect(result.created).toBe(false);
+      expect(result.alreadyExisted).toBe(true);
+      expect(result.groupDN).toBe('CN=Test Group,OU=Groups,DC=example,DC=com');
+    });
+
+    test('should set alreadyExisted=false when group is newly created', async () => {
+      const params = {
+        groupDN: 'CN=Test Group,OU=Groups,DC=example,DC=com',
+        samAccountName: 'testgroup'
+      };
+
+      const result = await script.invoke(params, mockContext);
+
+      expect(result.status).toBe('success');
+      expect(result.created).toBe(true);
+      expect(result.alreadyExisted).toBe(false);
+    });
+
+    test('should still throw other errors even when successIfAlreadyExists is true', async () => {
+      mockAdd.mockRejectedValue(new Error('Insufficient access rights'));
+
+      const params = {
+        groupDN: 'CN=Test Group,OU=Groups,DC=example,DC=com',
+        samAccountName: 'testgroup',
+        successIfAlreadyExists: true
+      };
+
+      await expect(script.invoke(params, mockContext)).rejects.toThrow('Insufficient access rights');
     });
 
     test('should throw on missing LDAP_BIND_DN', async () => {
