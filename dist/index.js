@@ -65,11 +65,12 @@ const GROUP_TYPES = {
  * @throws {Error} If DN doesn't start with CN=
  */
 function extractCN(dn) {
-  const match = dn.match(/^CN=([^,]+)/i);
+  const match = dn.match(/^CN=((?:[^\\,]|\\.)+)/i);
   if (!match) {
     throw new Error('groupDN must start with CN= (e.g., CN=My Group,OU=Groups,DC=example,DC=com)');
   }
-  return match[1];
+  // Unescape DN escape sequences to get the raw CN value
+  return match[1].replace(/\\(.)/g, '$1');
 }
 
 /**
