@@ -401,6 +401,78 @@ describe('AD Create Group Script', () => {
     });
   });
 
+  describe('special characters in attributes', () => {
+    test('should handle dashes in group name (team - engineering)', async () => {
+      const params = {
+        groupDN: 'CN=team - engineering,OU=Groups,DC=example,DC=com',
+        samAccountName: 'team-engineering'
+      };
+
+      const result = await script.invoke(params, mockContext);
+
+      expect(result.status).toBe('success');
+      expect(mockAdd).toHaveBeenCalledWith(
+        'CN=team - engineering,OU=Groups,DC=example,DC=com',
+        expect.objectContaining({
+          cn: 'team - engineering'
+        })
+      );
+    });
+
+    test('should handle apostrophe in group description', async () => {
+      const params = {
+        groupDN: "CN=O'Brien Team,OU=Groups,DC=example,DC=com",
+        samAccountName: 'obrien-team',
+        description: "O'Brien's team for project management"
+      };
+
+      const result = await script.invoke(params, mockContext);
+
+      expect(result.status).toBe('success');
+      expect(mockAdd).toHaveBeenCalledWith(
+        "CN=O'Brien Team,OU=Groups,DC=example,DC=com",
+        expect.objectContaining({
+          cn: "O'Brien Team",
+          description: "O'Brien's team for project management"
+        })
+      );
+    });
+
+    test('should handle forward slash in group name', async () => {
+      const params = {
+        groupDN: 'CN=Sales/Marketing,OU=Groups,DC=example,DC=com',
+        samAccountName: 'sales-marketing'
+      };
+
+      const result = await script.invoke(params, mockContext);
+
+      expect(result.status).toBe('success');
+      expect(mockAdd).toHaveBeenCalledWith(
+        'CN=Sales/Marketing,OU=Groups,DC=example,DC=com',
+        expect.objectContaining({
+          cn: 'Sales/Marketing'
+        })
+      );
+    });
+
+    test('should extract CN with escaped comma in DN', async () => {
+      const params = {
+        groupDN: 'CN=Group\\, Special,OU=Groups,DC=example,DC=com',
+        samAccountName: 'group-special'
+      };
+
+      const result = await script.invoke(params, mockContext);
+
+      expect(result.status).toBe('success');
+      expect(mockAdd).toHaveBeenCalledWith(
+        'CN=Group\\, Special,OU=Groups,DC=example,DC=com',
+        expect.objectContaining({
+          cn: 'Group, Special'
+        })
+      );
+    });
+  });
+
   describe('error handler', () => {
     test('should wrap authentication errors', async () => {
       const error = new Error('Invalid credentials');
