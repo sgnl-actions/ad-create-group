@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/sgnl-actions/schemas/main/metadata.schema.json
 name: ad-create-group
 description: Create a new group in on-premise Active Directory via LDAP
 
@@ -33,7 +34,7 @@ inputs:
     required: false
 
   additionalAttributes:
-    type: object
+    type: text
     description: Object containing additional LDAP attribute names and values to set on the new group
     required: false
 
@@ -84,7 +85,3 @@ outputs:
   address:
     type: text
     description: LDAP server address used
-
-  message:
-    type: text
-    description: Additional status message or error details
