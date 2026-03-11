@@ -1,0 +1,9 @@
+# Group already exists error
+operation: add
+result: error
+code: 68
+message: "Entry already exists"
+error:
+  name: "LDAPError"
+  code: 68
+  message: "Entry already exists"

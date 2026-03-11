@@ -28,11 +28,12 @@ const mockContext = {
 
 // Action-specific parameters - customize these for your test
 const mockParams = {
-  groupDN: 'CN=Engineering Team,OU=Groups,DC=corp,DC=example,DC=com',
-  samAccountName: 'engineering-team',
-  description: 'A test security group created by ad-create-group action',
-  groupType: 'security',  // 'security' or 'distribution'
-  groupScope: 'global',   // 'global', 'domain_local', or 'universal'
+  groupDN: process.env.GROUP_DN || 'CN=Engineering Team,OU=Groups,DC=corp,DC=example,DC=com',
+  samAccountName: process.env.SAM_ACCOUNT_NAME || 'engineering-team',
+  description: process.env.DESCRIPTION || 'A test security group created by ad-create-group action',
+  groupType: process.env.GROUP_TYPE || 'security',  // 'security' or 'distribution'
+  groupScope: process.env.GROUP_SCOPE || 'global',   // 'global', 'domain_local', or 'universal'
+  successIfAlreadyExists: process.env.SUCCESS_IF_ALREADY_EXISTS === 'true',
   dry_run: process.env.DRY_RUN === 'true'
 };
 

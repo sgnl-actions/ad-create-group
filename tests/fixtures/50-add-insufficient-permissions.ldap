@@ -1,0 +1,9 @@
+# Insufficient permissions to create group
+operation: add
+result: error
+code: 50
+message: "INSUFFICIENT_ACCESS_RIGHTS: Insufficient access rights"
+error:
+  name: "LDAPError"
+  code: 50
+  message: "Insufficient access rights"

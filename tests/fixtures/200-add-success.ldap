@@ -1,0 +1,5 @@
+# Successful group creation
+operation: add
+result: success
+code: 0
+message: "Add successful"
