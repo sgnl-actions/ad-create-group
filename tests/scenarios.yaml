@@ -1,7 +1,7 @@
 # LDAP scenarios for ad-create-group action
 action:
   params:
-    groupDN: CN=Test Group,OU=Groups,DC=adaptertest,DC=sgnl,DC=ai
+    groupDN: CN=Test Group,OU=Groups,DC=corp,DC=example,DC=com
     samAccountName: TestGroup
     description: Test group for SGNL Actions testing
     groupType: security
@@ -10,22 +10,22 @@ action:
     successIfAlreadyExists: false
   context:
     secrets:
-      LDAP_BIND_DN: CN=testuser,OU=Users,OU=adaptertest,DC=adaptertest,DC=sgnl,DC=ai
-      LDAP_BIND_PASSWORD: Welcome123!
+      LDAP_BIND_DN: CN=svc-sgnl,OU=Service Accounts,DC=corp,DC=example,DC=com
+      LDAP_BIND_PASSWORD: test-password
     environment:
-      ADDRESS: ldap://managed-adapter-ad-5b022a4e7e96be14.elb.us-east-2.amazonaws.com:389
+      ADDRESS: ldaps://ad.corp.example.com:636
 
 scenarios:
   - name: successfully create security group
     steps:
       - ldap:
           operation: bind
-          bindDN: CN=testuser,OU=Users,OU=adaptertest,DC=adaptertest,DC=sgnl,DC=ai
+          bindDN: CN=svc-sgnl,OU=Service Accounts,DC=corp,DC=example,DC=com
           password: "[MASKED]"
         fixture: fixtures/200-bind-success.ldap
       - ldap:
           operation: add
-          dn: CN=Test Group,OU=Groups,DC=adaptertest,DC=sgnl,DC=ai
+          dn: CN=Test Group,OU=Groups,DC=corp,DC=example,DC=com
           entry:
             objectClass: ["top", "group"]
             cn: Test Group
@@ -39,12 +39,13 @@ scenarios:
     invoke:
       returns:
         status: success
-        groupDN: CN=Test Group,OU=Groups,DC=adaptertest,DC=sgnl,DC=ai
+        groupDN: CN=Test Group,OU=Groups,DC=corp,DC=example,DC=com
         created: true
         alreadyExisted: false
         attributes: ["sAMAccountName", "description"]
         groupType: security
         groupScope: global
+        address: ldaps://ad.corp.example.com:636
 
   - name: group already exists - treat as success
     params:
@@ -52,12 +53,12 @@ scenarios:
     steps:
       - ldap:
           operation: bind
-          bindDN: CN=testuser,OU=Users,OU=adaptertest,DC=adaptertest,DC=sgnl,DC=ai
+          bindDN: CN=svc-sgnl,OU=Service Accounts,DC=corp,DC=example,DC=com
           password: "[MASKED]"
         fixture: fixtures/200-bind-success.ldap
       - ldap:
           operation: add
-          dn: CN=Test Group,OU=Groups,DC=adaptertest,DC=sgnl,DC=ai
+          dn: CN=Test Group,OU=Groups,DC=corp,DC=example,DC=com
           entry:
             objectClass: ["top", "group"]
             cn: Test Group
@@ -71,23 +72,24 @@ scenarios:
     invoke:
       returns:
         status: success
-        groupDN: CN=Test Group,OU=Groups,DC=adaptertest,DC=sgnl,DC=ai
+        groupDN: CN=Test Group,OU=Groups,DC=corp,DC=example,DC=com
         created: false
         alreadyExisted: true
         attributes: ["sAMAccountName", "description"]
         groupType: security
         groupScope: global
+        address: ldaps://ad.corp.example.com:636
 
   - name: group already exists - should fail
     steps:
       - ldap:
           operation: bind
-          bindDN: CN=testuser,OU=Users,OU=adaptertest,DC=adaptertest,DC=sgnl,DC=ai
+          bindDN: CN=svc-sgnl,OU=Service Accounts,DC=corp,DC=example,DC=com
           password: "[MASKED]"
         fixture: fixtures/200-bind-success.ldap
       - ldap:
           operation: add
-          dn: CN=Test Group,OU=Groups,DC=adaptertest,DC=sgnl,DC=ai
+          dn: CN=Test Group,OU=Groups,DC=corp,DC=example,DC=com
           entry:
             objectClass: ["top", "group"]
             cn: Test Group
@@ -107,7 +109,7 @@ scenarios:
     steps:
       - ldap:
           operation: bind
-          bindDN: CN=testuser,OU=Users,OU=adaptertest,DC=adaptertest,DC=sgnl,DC=ai
+          bindDN: CN=svc-sgnl,OU=Service Accounts,DC=corp,DC=example,DC=com
           password: "[MASKED]"
         fixture: fixtures/49-bind-error.ldap
     invoke:
@@ -119,12 +121,12 @@ scenarios:
     steps:
       - ldap:
           operation: bind
-          bindDN: CN=testuser,OU=Users,OU=adaptertest,DC=adaptertest,DC=sgnl,DC=ai
+          bindDN: CN=svc-sgnl,OU=Service Accounts,DC=corp,DC=example,DC=com
           password: "[MASKED]"
         fixture: fixtures/200-bind-success.ldap
       - ldap:
           operation: add
-          dn: CN=Test Group,OU=Groups,DC=adaptertest,DC=sgnl,DC=ai
+          dn: CN=Test Group,OU=Groups,DC=corp,DC=example,DC=com
           entry:
             objectClass: ["top", "group"]
             cn: Test Group
@@ -140,22 +142,44 @@ scenarios:
     error:
       throws: "Insufficient LDAP permissions"
 
+  - name: dry run mode
+    params:
+      dry_run: true
+    steps: []  # No LDAP operations in dry run
+    invoke:
+      returns:
+        status: dry_run_completed
+        groupDN: CN=Test Group,OU=Groups,DC=corp,DC=example,DC=com
+        created: false
+        alreadyExisted: false
+        attributes: ["sAMAccountName", "description"]
+        groupType: security
+        groupScope: global
+
+  - name: missing required parameters
+    params:
+      groupDN: ""
+      samAccountName: TestGroup
+    steps: []  # No LDAP operations due to validation failure
+    invoke:
+      throws: "groupDN is required"
+
   - name: idempotent group creation - first call creates, second call succeeds
     params:
       successIfAlreadyExists: true
-      groupDN: CN=Idempotent Test Group,OU=Groups,DC=adaptertest,DC=sgnl,DC=ai
+      groupDN: CN=Idempotent Test Group,OU=Groups,DC=corp,DC=example,DC=com
       samAccountName: IdempotentTestGroup
       description: Test group for idempotency testing
     steps:
       # First call - group doesn't exist, should create successfully
       - ldap:
           operation: bind
-          bindDN: CN=testuser,OU=Users,OU=adaptertest,DC=adaptertest,DC=sgnl,DC=ai
+          bindDN: CN=svc-sgnl,OU=Service Accounts,DC=corp,DC=example,DC=com
           password: "[MASKED]"
         fixture: fixtures/200-bind-success.ldap
       - ldap:
           operation: add
-          dn: CN=Idempotent Test Group,OU=Groups,DC=adaptertest,DC=sgnl,DC=ai
+          dn: CN=Idempotent Test Group,OU=Groups,DC=corp,DC=example,DC=com
           entry:
             objectClass: ["top", "group"]
             cn: Idempotent Test Group
@@ -169,29 +193,30 @@ scenarios:
     invoke:
       returns:
         status: success
-        groupDN: CN=Idempotent Test Group,OU=Groups,DC=adaptertest,DC=sgnl,DC=ai
+        groupDN: CN=Idempotent Test Group,OU=Groups,DC=corp,DC=example,DC=com
         created: true
         alreadyExisted: false
         attributes: ["sAMAccountName", "description"]
         groupType: security
         groupScope: global
+        address: ldaps://ad.corp.example.com:636
 
   - name: idempotent group creation - second call with same params succeeds
     params:
       successIfAlreadyExists: true
-      groupDN: CN=Idempotent Test Group,OU=Groups,DC=adaptertest,DC=sgnl,DC=ai
+      groupDN: CN=Idempotent Test Group,OU=Groups,DC=corp,DC=example,DC=com
       samAccountName: IdempotentTestGroup
       description: Test group for idempotency testing
     steps:
       # Second call - group already exists, should succeed with alreadyExisted: true
       - ldap:
           operation: bind
-          bindDN: CN=testuser,OU=Users,OU=adaptertest,DC=adaptertest,DC=sgnl,DC=ai
+          bindDN: CN=svc-sgnl,OU=Service Accounts,DC=corp,DC=example,DC=com
           password: "[MASKED]"
         fixture: fixtures/200-bind-success.ldap
       - ldap:
           operation: add
-          dn: CN=Idempotent Test Group,OU=Groups,DC=adaptertest,DC=sgnl,DC=ai
+          dn: CN=Idempotent Test Group,OU=Groups,DC=corp,DC=example,DC=com
           entry:
             objectClass: ["top", "group"]
             cn: Idempotent Test Group
@@ -205,7 +230,7 @@ scenarios:
     invoke:
       returns:
         status: success
-        groupDN: CN=Idempotent Test Group,OU=Groups,DC=adaptertest,DC=sgnl,DC=ai
+        groupDN: CN=Idempotent Test Group,OU=Groups,DC=corp,DC=example,DC=com
         created: false
         alreadyExisted: true
         attributes: ["sAMAccountName", "description"]
