@@ -268,13 +268,28 @@ npm run lint:fix
 
 ### Local testing
 
-Create a `../.env` file with your AD credentials:
+Copy the sample environment file and configure with your AD credentials:
+
+```bash
+cp .env.sample .env
+```
+
+Then edit `.env` with your actual values:
 
 ```
 AD_ADDRESS=ldap://your-dc.example.com:389
 LDAP_BIND_DN=CN=admin,DC=example,DC=com
 LDAP_BIND_PASSWORD=your-password
 TLS_SKIP_VERIFY=false
+
+# Test parameters for ad-create-group
+GROUP_DN=CN=Engineering Team,OU=Groups,DC=corp,DC=example,DC=com
+SAM_ACCOUNT_NAME=engineering-team
+DESCRIPTION=A test security group created by ad-create-group action
+GROUP_TYPE=security
+GROUP_SCOPE=global
+SUCCESS_IF_ALREADY_EXISTS=true
+DRY_RUN=false
 ```
 
 Then run:
