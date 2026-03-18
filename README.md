@@ -19,8 +19,8 @@ Supports security and distribution groups across global, domain local, and unive
 
 | Secret | Description |
 |--------|-------------|
-| `LDAP_BIND_DN` | Bind DN of the service account (e.g., `CN=svc-sgnl,OU=Service Accounts,DC=example,DC=com`) |
-| `LDAP_BIND_PASSWORD` | Password for the service account |
+| `BASIC_USERNAME` | Bind DN of the service account (e.g., `CN=svc-sgnl,OU=Service Accounts,DC=example,DC=com`) |
+| `BASIC_PASSWORD` | Password for the service account |
 
 ### Environment Variables
 
@@ -277,9 +277,9 @@ cp .env.sample .env
 Then edit `.env` with your actual values:
 
 ```
-AD_ADDRESS=ldap://your-dc.example.com:389
-LDAP_BIND_DN=CN=admin,DC=example,DC=com
-LDAP_BIND_PASSWORD=your-password
+ADDRESS=ldap://your-dc.example.com:389
+BASIC_USERNAME=CN=admin,DC=example,DC=com
+BASIC_PASSWORD=your-password
 TLS_SKIP_VERIFY=false
 
 # Test parameters for ad-create-group

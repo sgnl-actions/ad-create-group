@@ -70,8 +70,8 @@ Active Directory uses a bitmask for group types:
 The action reads configuration from context:
 - `context.environment.ADDRESS`: LDAP server URL
 - `context.environment.TLS_SKIP_VERIFY`: Skip TLS verification
-- `context.secrets.LDAP_BIND_DN`: Bind account DN
-- `context.secrets.LDAP_BIND_PASSWORD`: Bind account password
+- `context.secrets.BASIC_USERNAME`: Bind account DN
+- `context.secrets.BASIC_PASSWORD`: Bind account password
 
 ### Script Handlers
 
