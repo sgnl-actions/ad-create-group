@@ -10,8 +10,8 @@ action:
     successIfAlreadyExists: false
   context:
     secrets:
-      LDAP_BIND_DN: CN=svc-sgnl,OU=Service Accounts,DC=corp,DC=example,DC=com
-      LDAP_BIND_PASSWORD: test-password
+      BASIC_USERNAME: CN=svc-sgnl,OU=Service Accounts,DC=corp,DC=example,DC=com
+      BASIC_PASSWORD: test-password
     environment:
       ADDRESS: ldaps://ad.corp.example.com:636
 
