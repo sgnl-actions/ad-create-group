@@ -146,6 +146,7 @@ export default {
         status: 'dry_run_completed',
         groupDN,
         created: false,
+        alreadyExisted: false,
         attributes: userAttributes,
         groupType: params.groupType || 'security',
         groupScope: params.groupScope || 'global'
